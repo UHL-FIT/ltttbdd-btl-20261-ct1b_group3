@@ -50,6 +50,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
+    // Khai báo thư viện mở rộng chứa toàn bộ Icon cho Compose
+    implementation("androidx.compose.material:material-icons-extended")
+
     // Room Database
     implementation("androidx.room:room-runtime:2.7.0")
     implementation("androidx.room:room-ktx:2.7.0")
