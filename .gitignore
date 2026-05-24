@@ -1,6 +1,6 @@
 *.iml
 .gradle
-quyUoc.md
+quyUoc_lttbdd.md
 /local.properties
 /.idea/caches
 /.idea/libraries
@@ -14,3 +14,5 @@ quyUoc.md
 .externalNativeBuild
 .cxx
 local.properties
+.planning/
+notelai.txt
