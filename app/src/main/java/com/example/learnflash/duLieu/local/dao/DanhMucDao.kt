@@ -25,6 +25,10 @@ interface DanhMucDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun themHoacCapNhatDanhMuc(danhMuc: DanhMuc)
 
+    // Thêm nhiều danh mục cùng lúc (batch insert) trong một transaction
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun themNhieuDanhMuc(danhSach: List<DanhMuc>)
+
     // Cập nhật thông tin danh mục đã có
     @Update
     suspend fun capNhatDanhMuc(danhMuc: DanhMuc)

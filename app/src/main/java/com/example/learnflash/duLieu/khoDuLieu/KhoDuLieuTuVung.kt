@@ -4,9 +4,10 @@ import com.example.learnflash.duLieu.local.dao.LichSuOnTapDao
 import com.example.learnflash.duLieu.local.dao.TuVungDao
 import com.example.learnflash.duLieu.local.thucThe.LichSuOnTap
 import com.example.learnflash.duLieu.local.thucThe.TuVung
-import com.example.learnflash.duLieu.remote.firebase.FirebaseNguonDuLieu
+import com.example.learnflash.duLieu.local.dao.ThongKeDanhMuc
 import com.example.learnflash.duLieu.remote.api.DichThuatApi
 import com.example.learnflash.duLieu.remote.api.TuVungApi
+import com.example.learnflash.duLieu.remote.firebase.FirebaseNguonDuLieu
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -108,4 +109,7 @@ class KhoDuLieuTuVung(
     fun demSoLuotOnTapHomNay(batDauNgay: Long, cuoiNgay: Long): Flow<Int> = lichSuOnTapDao.demSoLuotOnTapTrongNgay(batDauNgay, cuoiNgay)
     fun layToanBoLichSu(): Flow<List<LichSuOnTap>> = lichSuOnTapDao.layToanBoLichSu()
     suspend fun themLichSuOnTap(lichSu: LichSuOnTap) = lichSuOnTapDao.themLichSu(lichSu)
+
+    // Trả về luồng dữ liệu thống kê số từ đã thuộc và tổng số từ theo từng danh mục
+    fun thongKeTheoDanhMuc(): Flow<List<ThongKeDanhMuc>> = tuVungDao.thongKeTheoDanhMuc()
 }

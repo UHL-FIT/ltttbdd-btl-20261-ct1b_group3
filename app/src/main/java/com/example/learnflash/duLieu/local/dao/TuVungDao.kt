@@ -9,6 +9,13 @@ import androidx.room.Update
 import com.example.learnflash.duLieu.local.thucThe.TuVung
 import kotlinx.coroutines.flow.Flow
 
+// Lớp dữ liệu hứng kết quả truy vấn thống kê nhóm theo danh mục từ Room
+data class ThongKeDanhMuc(
+    val danhMucId: String,
+    val tongSo: Int,
+    val soDaThuoc: Int
+)
+
 // Giao diện (Interface) định nghĩa các thao tác truy vấn với bảng tu_vung
 @Dao
 interface TuVungDao {
@@ -76,4 +83,14 @@ interface TuVungDao {
     // Trả về số từ vựng tới hạn ôn tập trong ngày hôm nay
     @Query("SELECT COUNT(*) FROM tu_vung WHERE ngayOnTapTiepTheo <= :cuoiNgayHomNay AND daThuoc = 0")
     fun demTuVungOnTapHomNay(cuoiNgayHomNay: Long): Flow<Int>
+
+    // Trả về danh sách thống kê số từ đã thuộc và tổng số từ theo từng danh mục
+    @Query("""
+        SELECT danhMucId,
+               COUNT(*) AS tongSo,
+               SUM(CASE WHEN daThuoc = 1 THEN 1 ELSE 0 END) AS soDaThuoc
+        FROM tu_vung
+        GROUP BY danhMucId
+    """)
+    fun thongKeTheoDanhMuc(): Flow<List<ThongKeDanhMuc>>
 }

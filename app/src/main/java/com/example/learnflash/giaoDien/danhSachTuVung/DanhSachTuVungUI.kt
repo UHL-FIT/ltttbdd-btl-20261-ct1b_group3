@@ -11,9 +11,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -23,6 +24,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,6 +50,26 @@ fun DanhSachTuVungUI(
     // Thu thập State từ ViewModel
     val danhSachTu by viewModel.danhSachTuVung.collectAsState()
     val tuVungCanXoa by viewModel.tuVungCanXoa.collectAsState()
+    val tuKhoaTimKiem by viewModel.tuKhoaTimKiem.collectAsState()
+
+    // Hộp thoại xác nhận xóa từ vựng — đặt NGOÀI Scaffold để không bị lồng lambda
+    if (tuVungCanXoa != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.huyXoaTuVung() },
+            title = { Text("Xác nhận xóa") },
+            text = { Text("Xóa từ \"${tuVungCanXoa?.tuKhoa}\"? Thao tác không thể hoàn tác.") },
+            confirmButton = {
+                Button(onClick = { viewModel.xacNhanXoaTuVung() }) {
+                    Text("Xóa")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.huyXoaTuVung() }) {
+                    Text("Hủy")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -90,67 +112,66 @@ fun DanhSachTuVungUI(
             }
         }
     ) { paddingValues ->
-        if (danhSachTu.isEmpty()) {
-            // Hiển thị gợi ý khi danh mục chưa có từ vựng nào
-            Column(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Ô nhập tìm kiếm — lọc real-time không cần gọi DB
+            OutlinedTextField(
+                value = tuKhoaTimKiem,
+                onValueChange = { viewModel.capNhatTimKiem(it) },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Chưa có từ vựng nào",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "Nhấn + để thêm từ vựng mới",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else {
-            // Danh sách cuộn LazyColumn hiển thị từ vựng trong danh mục
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                items(danhSachTu) { tuVung ->
-                    // Thẻ hiển thị một từ vựng trong danh sách
-                    ItemTuVungTrongDanhMuc(
-                        tuVung = tuVung,
-                        onSua = { chuyenHuongChiTiet(tuVung.id, viewModel.danhMucId) },
-                        onXoa = { viewModel.yeuCauXoaTuVung(tuVung) }
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                placeholder = { Text("Tìm từ khóa hoặc nghĩa tiếng Việt...") },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = "Tìm kiếm")
+                },
+                singleLine = true
+            )
+
+            if (danhSachTu.isEmpty()) {
+                // Hiển thị gợi ý khi danh mục chưa có từ vựng nào
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Chưa có từ vựng nào",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Text(
+                        text = "Nhấn + để thêm từ vựng mới",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                // Danh sách cuộn LazyColumn hiển thị từ vựng trong danh mục
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(danhSachTu) { tuVung ->
+                        ItemTuVungTrongDanhMuc(
+                            tuVung = tuVung,
+                            onSua = { chuyenHuongChiTiet(tuVung.id, viewModel.danhMucId) },
+                            onXoa = { viewModel.yeuCauXoaTuVung(tuVung) }
+                        )
+                    }
                 }
             }
         }
     }
-
-    // Hộp thoại xác nhận xóa từ vựng — hiển thị khi tuVungCanXoa khác null
-    if (tuVungCanXoa != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.huyXoaTuVung() },
-            title = { Text("Xác nhận xóa") },
-            text = { Text("Xóa từ \"${tuVungCanXoa?.tuKhoa}\"? Thao tác không thể hoàn tác.") },
-            confirmButton = {
-                Button(onClick = { viewModel.xacNhanXoaTuVung() }) {
-                    Text("Xóa")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.huyXoaTuVung() }) {
-                    Text("Hủy")
-                }
-            }
-        )
-    }
 }
 
 // Thành phần Composable hiển thị một thẻ từ vựng trong LazyColumn
+// *** Đặt NGOÀI hàm DanhSachTuVungUI — không được khai báo local bên trong Composable ***
 @Composable
 fun ItemTuVungTrongDanhMuc(tuVung: TuVung, onSua: () -> Unit, onXoa: () -> Unit) {
     Card(
