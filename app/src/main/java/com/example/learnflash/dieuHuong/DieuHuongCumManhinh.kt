@@ -176,7 +176,7 @@ fun DieuHuongApp(
             // Tuyến đường Màn Hình Thống Kê
             composable("thongKe") {
                 val viewModel: ThongKeViewModel = viewModel {
-                    ThongKeViewModel(khoDuLieu, khoDuLieuDanhMuc)
+                    ThongKeViewModel(khoDuLieu, khoDuLieuDanhMuc, caiDatDataStore)
                 }
                 ThongKeUI(viewModel = viewModel)
             }

@@ -107,6 +107,15 @@ class KhoDuLieuTuVung(
     fun layThapNhatCapDoSrs(): Flow<Int?> = tuVungDao.layThapNhatCapDoSrs()
     fun demTuVungOnTapHomNay(cuoiNgayHomNay: Long): Flow<Int> = tuVungDao.demTuVungOnTapHomNay(cuoiNgayHomNay)
     fun demSoLuotOnTapHomNay(batDauNgay: Long, cuoiNgay: Long): Flow<Int> = lichSuOnTapDao.demSoLuotOnTapTrongNgay(batDauNgay, cuoiNgay)
+    
+    // Lấy tổng số từ vựng thực tế đã ôn tập trong ngày hôm nay
+    fun tinhTongSoTuDaOnHomNay(batDauNgay: Long, cuoiNgay: Long): Flow<Int?> =
+        lichSuOnTapDao.tinhTongSoTuDaOnTrongNgay(batDauNgay, cuoiNgay)
+
+    // Lấy số lượng từ vựng ở một cấp độ SRS cụ thể
+    fun demSoTuTheoCapDoSrs(capDoSrs: Int): Flow<Int> =
+        tuVungDao.demSoTuTheoCapDoSrs(capDoSrs)
+
     fun layToanBoLichSu(): Flow<List<LichSuOnTap>> = lichSuOnTapDao.layToanBoLichSu()
     suspend fun themLichSuOnTap(lichSu: LichSuOnTap) = lichSuOnTapDao.themLichSu(lichSu)
 

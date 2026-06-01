@@ -80,6 +80,10 @@ interface TuVungDao {
     @Query("SELECT MIN(capDoSrs) FROM tu_vung")
     fun layThapNhatCapDoSrs(): Flow<Int?>
 
+    // Đếm số từ vựng ở một cấp độ SRS cụ thể và chưa thuộc hoàn toàn
+    @Query("SELECT COUNT(*) FROM tu_vung WHERE capDoSrs = :capDoSrs AND daThuoc = 0")
+    fun demSoTuTheoCapDoSrs(capDoSrs: Int): Flow<Int>
+
     // Trả về số từ vựng tới hạn ôn tập trong ngày hôm nay
     @Query("SELECT COUNT(*) FROM tu_vung WHERE ngayOnTapTiepTheo <= :cuoiNgayHomNay AND daThuoc = 0")
     fun demTuVungOnTapHomNay(cuoiNgayHomNay: Long): Flow<Int>

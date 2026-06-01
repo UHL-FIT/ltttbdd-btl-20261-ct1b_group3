@@ -19,6 +19,10 @@ interface LichSuOnTapDao {
     @Query("SELECT COUNT(*) FROM lich_su_on_tap WHERE ngayOnTap >= :batDauNgay AND ngayOnTap <= :cuoiNgay")
     fun demSoLuotOnTapTrongNgay(batDauNgay: Long, cuoiNgay: Long): Flow<Int>
 
+    // Tính tổng số từ vựng đã ôn trong khoảng thời gian một ngày cụ thể
+    @Query("SELECT SUM(soTuDaHoc) FROM lich_su_on_tap WHERE ngayOnTap >= :batDauNgay AND ngayOnTap <= :cuoiNgay")
+    fun tinhTongSoTuDaOnTrongNgay(batDauNgay: Long, cuoiNgay: Long): Flow<Int?>
+
     // Thực thi thao tác thêm một bản ghi lịch sử mới
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun themLichSu(lichSu: LichSuOnTap)
