@@ -91,9 +91,10 @@ class FirebaseNguonDuLieu(
                 phienAm = doc.getString("phienAm") ?: "",
                 loaiTu = doc.getString("loaiTu") ?: "",
                 danhMucId = doc.getString("danhMucId") ?: "mac_dinh",
-                capDoSrs = (doc.getLong("capDoSrs") ?: 0L).toInt(),
-                ngayOnTapTiepTheo = doc.getLong("ngayOnTapTiepTheo") ?: System.currentTimeMillis(),
-                daThuoc = doc.getBoolean("daThuoc") ?: false
+                // Ép các trường tiến độ học tập về giá trị mặc định lúc khởi tạo ban đầu để tránh dính tiến độ cũ trên Firestore
+                capDoSrs = 0,
+                ngayOnTapTiepTheo = System.currentTimeMillis(),
+                daThuoc = false
             )
         }
         if (danhSach.isNotEmpty()) {
@@ -102,46 +103,125 @@ class FirebaseNguonDuLieu(
         Log.d(logTag, "Đã tải ${danhSach.size} từ vựng từ Firestore (batch insert)")
     }
 
-    // Đồng bộ tiến độ SRS của một từ vựng lên Firestore sau mỗi phiên đánh giá
+    // Đồng bộ tiến độ SRS của một từ vựng lên Firestore (đã tắt để giữ tiến độ học tập độc lập ở local)
     suspend fun dongBoTienDoSrs(tuVung: TuVung) {
-        try {
-            val ketQua = db.collection(COLLECTION_TU_VUNG)
-                .whereEqualTo("tuKhoa", tuVung.tuKhoa)
-                .get()
-                .await()
-            if (!ketQua.isEmpty) {
-                // Chỉ cập nhật 3 trường SRS — không ghi đè toàn bộ Document
-                val capNhat = mapOf(
-                    "capDoSrs" to tuVung.capDoSrs,
-                    "ngayOnTapTiepTheo" to tuVung.ngayOnTapTiepTheo,
-                    "daThuoc" to tuVung.daThuoc
-                )
-                ketQua.documents[0].reference.update(capNhat).await()
-                Log.d(logTag, "Đồng bộ SRS lên Firestore thành công: ${tuVung.tuKhoa}")
-            }
-        } catch (e: Exception) {
-            // Ghi log cảnh báo nhưng không crash app — sẽ đồng bộ lại lần sau
-            Log.w(logTag, "Đồng bộ SRS thất bại (sẽ thử lại): ${e.message}")
-        }
+        // Tắt tính năng này để giữ tiến độ học tập riêng tư trên từng thiết bị
+        Log.d(logTag, "Đã bỏ qua đồng bộ SRS lên Firestore cho từ: ${tuVung.tuKhoa}")
     }
 
-    // Đẩy một từ vựng mới do người dùng tạo lên Firestore
+    // Đẩy một từ vựng mới do người dùng tạo lên Firestore (chỉ đẩy thông tin từ, không đẩy tiến độ học SRS cục bộ)
     suspend fun themTuVungLenFirestore(tuVung: TuVung) {
         try {
+            // Chuẩn hóa từ khóa cần kiểm tra loại bỏ khoảng trắng dư thừa
+            val tuKhoaChuan = tuVung.tuKhoa.trim()
+            // Truy vấn kiểm tra từ khóa trùng khớp chính xác trên Firestore
+            val ketQuaGoc = db.collection(COLLECTION_TU_VUNG)
+                .whereEqualTo("tuKhoa", tuKhoaChuan)
+                .get()
+                .await()
+            if (!ketQuaGoc.isEmpty) {
+                // Ghi nhận log và bỏ qua không tải lên nếu đã tồn tại từ trùng khớp chính xác
+                Log.d(logTag, "Từ vựng đã tồn tại trên Firestore, bỏ qua tải lên: $tuKhoaChuan")
+                return
+            }
+            // Tạo từ khóa viết thường để kiểm tra trùng lặp không phân biệt hoa thường
+            val tuKhoaThuong = tuKhoaChuan.lowercase()
+            if (tuKhoaChuan != tuKhoaThuong) {
+                // Truy vấn kiểm tra từ khóa viết thường trên Firestore
+                val ketQuaThuong = db.collection(COLLECTION_TU_VUNG)
+                    .whereEqualTo("tuKhoa", tuKhoaThuong)
+                    .get()
+                    .await()
+                if (!ketQuaThuong.isEmpty) {
+                    // Bỏ qua tải lên nếu đã có từ dạng viết thường trên Firestore
+                    Log.d(logTag, "Từ vựng dạng chữ thường đã tồn tại trên Firestore, bỏ qua tải lên: $tuKhoaChuan")
+                    return
+                }
+            }
+            // Tạo từ khóa viết hoa chữ cái đầu để kiểm tra đối soát
+            val tuKhoaHoaDau = tuKhoaChuan.replaceFirstChar { it.uppercase() }
+            if (tuKhoaChuan != tuKhoaHoaDau) {
+                // Truy vấn kiểm tra từ khóa viết hoa chữ cái đầu trên Firestore
+                val ketQuaHoaDau = db.collection(COLLECTION_TU_VUNG)
+                    .whereEqualTo("tuKhoa", tuKhoaHoaDau)
+                    .get()
+                    .await()
+                if (!ketQuaHoaDau.isEmpty) {
+                    // Bỏ qua tải lên nếu đã có từ dạng viết hoa chữ đầu trên Firestore
+                    Log.d(logTag, "Từ vựng dạng viết hoa chữ đầu đã tồn tại trên Firestore, bỏ qua tải lên: $tuKhoaChuan")
+                    return
+                }
+            }
+            // Đóng gói các thông tin từ vựng cần tải lên
             val duLieu = mapOf(
                 "tuKhoa" to tuVung.tuKhoa,
                 "nghiaTiengViet" to tuVung.nghiaTiengViet,
                 "phienAm" to tuVung.phienAm,
                 "loaiTu" to tuVung.loaiTu,
-                "danhMucId" to tuVung.danhMucId,
-                "capDoSrs" to tuVung.capDoSrs,
-                "ngayOnTapTiepTheo" to tuVung.ngayOnTapTiepTheo,
-                "daThuoc" to tuVung.daThuoc
+                "danhMucId" to tuVung.danhMucId
             )
+            // Thực thi lệnh thêm tài liệu mới lên Firestore
             db.collection(COLLECTION_TU_VUNG).add(duLieu).await()
-            Log.d(logTag, "Thêm từ mới lên Firestore thành công: ${tuVung.tuKhoa}")
+            Log.d(logTag, "Thêm từ mới lên Firestore thành công (không kèm tiến độ SRS): ${tuVung.tuKhoa}")
         } catch (e: Exception) {
             Log.w(logTag, "Thêm từ lên Firestore thất bại: ${e.message}")
+        }
+    }
+
+    // Đẩy một danh mục mới lên Firestore nếu tên danh mục chưa tồn tại trên Firestore
+    suspend fun themDanhMucLenFirestore(danhMuc: DanhMuc) {
+        try {
+            // Chuẩn hóa tên danh mục cần kiểm tra
+            val tenChuan = danhMuc.ten.trim()
+            // Truy vấn kiểm tra tên danh mục trùng khớp chính xác trên Firestore
+            val ketQuaGoc = db.collection(COLLECTION_DANH_MUC)
+                .whereEqualTo("ten", tenChuan)
+                .get()
+                .await()
+            if (!ketQuaGoc.isEmpty) {
+                // Ghi nhận log và bỏ qua không tải lên nếu đã tồn tại danh mục trùng tên
+                Log.d(logTag, "Danh mục đã tồn tại trên Firestore, bỏ qua tải lên: $tenChuan")
+                return
+            }
+            // Tạo tên danh mục viết thường để kiểm tra trùng lặp không phân biệt hoa thường
+            val tenThuong = tenChuan.lowercase()
+            if (tenChuan != tenThuong) {
+                // Truy vấn kiểm tra tên viết thường trên Firestore
+                val ketQuaThuong = db.collection(COLLECTION_DANH_MUC)
+                    .whereEqualTo("ten", tenThuong)
+                    .get()
+                    .await()
+                if (!ketQuaThuong.isEmpty) {
+                    // Bỏ qua tải lên nếu đã có danh mục trùng tên dạng viết thường
+                    Log.d(logTag, "Danh mục dạng chữ thường đã tồn tại trên Firestore, bỏ qua tải lên: $tenChuan")
+                    return
+                }
+            }
+            // Tạo tên danh mục viết hoa chữ cái đầu để đối soát
+            val tenHoaDau = tenChuan.replaceFirstChar { it.uppercase() }
+            if (tenChuan != tenHoaDau) {
+                // Truy vấn kiểm tra tên viết hoa chữ đầu trên Firestore
+                val ketQuaHoaDau = db.collection(COLLECTION_DANH_MUC)
+                    .whereEqualTo("ten", tenHoaDau)
+                    .get()
+                    .await()
+                if (!ketQuaHoaDau.isEmpty) {
+                    // Bỏ qua tải lên nếu đã có danh mục trùng tên dạng viết hoa chữ đầu
+                    Log.d(logTag, "Danh mục dạng viết hoa chữ đầu đã tồn tại trên Firestore, bỏ qua tải lên: $tenChuan")
+                    return
+                }
+            }
+            // Đóng gói các thông tin danh mục cần tải lên
+            val duLieu = mapOf(
+                "ten" to danhMuc.ten,
+                "moTa" to danhMuc.moTa,
+                "laMacDinh" to danhMuc.laMacDinh
+            )
+            // Lưu thông tin danh mục lên Firestore sử dụng chính ID cục bộ làm ID tài liệu
+            db.collection(COLLECTION_DANH_MUC).document(danhMuc.id).set(duLieu).await()
+            Log.d(logTag, "Thêm danh mục mới lên Firestore thành công: ${danhMuc.ten}")
+        } catch (e: Exception) {
+            Log.w(logTag, "Thêm danh mục lên Firestore thất bại: ${e.message}")
         }
     }
 }

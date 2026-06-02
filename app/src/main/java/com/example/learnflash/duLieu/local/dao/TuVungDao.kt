@@ -24,6 +24,14 @@ interface TuVungDao {
     @Query("SELECT * FROM tu_vung ORDER BY id DESC")
     fun layToanBoTuVung(): Flow<List<TuVung>>
 
+    // Lấy toàn bộ danh sách từ vựng đồng bộ dưới dạng List phục vụ đối soát trùng lặp
+    @Query("SELECT * FROM tu_vung")
+    suspend fun layDanhSachToanBoTuVung(): List<TuVung>
+
+    // Xóa sạch toàn bộ từ vựng trong cơ sở dữ liệu Room
+    @Query("DELETE FROM tu_vung")
+    suspend fun xoaSachToanBoTuVung()
+
     // Lấy danh sách từ vựng tới hạn ôn tập dựa trên thời gian hiện tại
     @Query("SELECT * FROM tu_vung WHERE ngayOnTapTiepTheo <= :thoiGianHienTai AND daThuoc = 0")
     fun layTuVungCanOnTap(thoiGianHienTai: Long): Flow<List<TuVung>>

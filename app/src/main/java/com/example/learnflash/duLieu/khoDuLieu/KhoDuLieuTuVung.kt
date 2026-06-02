@@ -45,10 +45,25 @@ class KhoDuLieuTuVung(
         }
     }
 
-    // Cập nhật tiến độ SRS vào Room và đồng bộ lên Firestore sau mỗi phiên đánh giá
+    // Thực thi thao tác chèn nhiều từ vựng cùng lúc vào Room Database
+    suspend fun themNhieuTuVung(danhSach: List<TuVung>) {
+        tuVungDao.themNhieuTuVung(danhSach)
+    }
+
+    // Lấy toàn bộ danh sách từ vựng đồng bộ dưới dạng List phục vụ đối soát trùng lặp
+    suspend fun layDanhSachToanBoTuVung(): List<TuVung> {
+        return tuVungDao.layDanhSachToanBoTuVung()
+    }
+
+    // Xóa sạch toàn bộ từ vựng hiện có trong Room Database
+    suspend fun xoaSachToanBoTuVung() {
+        tuVungDao.xoaSachToanBoTuVung()
+    }
+
+    // Cập nhật tiến độ SRS vào Room (chỉ lưu cục bộ, không đồng bộ lên Firestore để tránh xung đột giữa các máy)
     suspend fun capNhatTienDoSrs(tuVung: TuVung) {
         tuVungDao.capNhatTuVung(tuVung)
-        firebaseNguonDuLieu.dongBoTienDoSrs(tuVung)
+        // firebaseNguonDuLieu.dongBoTienDoSrs(tuVung)
     }
 
     // Thực thi thao tác xóa từ vựng khỏi Room Database

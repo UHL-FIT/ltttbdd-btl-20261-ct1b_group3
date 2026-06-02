@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
         val khoDuLieu = KhoDuLieuTuVung(tuVungDao, lichSuDao, api, dichThuatApi, firebaseNguonDuLieu)
 
         // Bơm phụ thuộc vào Kho dữ liệu danh mục
-        val khoDuLieuDanhMuc = KhoDuLieuDanhMuc(danhMucDao)
+        val khoDuLieuDanhMuc = KhoDuLieuDanhMuc(danhMucDao, firebaseNguonDuLieu)
 
         // Khởi tạo DataStore quản lý cài đặt người dùng (Dark Mode, Mục tiêu học ngày)
         val caiDatDataStore = CaiDatDataStore(this)
