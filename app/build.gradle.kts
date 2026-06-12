@@ -6,6 +6,13 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// Khai báo cấu phần phiên bản chính (Major)
+val phienBanMajor = 1
+// Khai báo cấu phần phiên bản phụ (Minor)
+val phienBanMinor = 0
+// Khai báo cấu phần phiên bản vá lỗi (Patch)
+val phienBanPatch = 0
+
 android {
     namespace = "com.example.learnflash"
     compileSdk {
@@ -18,8 +25,10 @@ android {
         applicationId = "com.example.learnflash"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        // Tính toán mã phiên bản tự động theo thuật toán Major * 10000 + Minor * 100 + Patch
+        versionCode = phienBanMajor * 10000 + phienBanMinor * 100 + phienBanPatch
+        // Gán chuỗi tên phiên bản theo định dạng chuẩn Major.Minor.Patch
+        versionName = "$phienBanMajor.$phienBanMinor.$phienBanPatch"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -50,9 +50,17 @@ fun GioiThieuUI(viewModel: GioiThieuViewModel) {
     // Trích xuất ngữ cảnh hệ thống (Context) để kích hoạt Intent mở PDF
     val context = LocalContext.current
 
+    // Kích hoạt ViewModel tải thông tin phiên bản từ hệ thống khi giao diện được vẽ
+    LaunchedEffect(Unit) {
+        viewModel.taiThongTinPhienBan(context)
+    }
+
+    // Thu thập trạng thái thông tin phiên bản từ ViewModel để chuẩn bị hiển thị
+    val thongTinPhienBan by viewModel.thongTinPhienBan.collectAsState()
+
     // Trạng thái lưu trữ URI được chọn tạm thời để chờ xác nhận chế độ nhập
     var uriNapDuLieuTam by remember { mutableStateOf<Uri?>(null) }
-
+    
     // Trạng thái kiểm soát việc hiển thị hộp thoại lựa chọn chế độ nhập dữ liệu
     var hienThiHopThoaiCheDo by remember { mutableStateOf(false) }
 
@@ -117,8 +125,9 @@ fun GioiThieuUI(viewModel: GioiThieuViewModel) {
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold
             )
+            // Hiển thị chuỗi thông tin phiên bản động lấy từ hệ thống
             Text(
-                text = "Phiên bản 1.0.0",
+                text = thongTinPhienBan,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

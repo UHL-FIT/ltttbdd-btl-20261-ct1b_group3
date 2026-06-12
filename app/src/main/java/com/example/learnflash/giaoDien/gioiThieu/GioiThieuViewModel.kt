@@ -42,6 +42,38 @@ class GioiThieuViewModel(
     // Trạng thái (State) lưu thông báo kết quả sau khi xử lý xong để hiển thị SnackBar
     private val _thongBaoKetQua = MutableStateFlow("")
     val thongBaoKetQua: StateFlow<String> = _thongBaoKetQua.asStateFlow()
+
+    // Trạng thái lưu trữ thông tin phiên bản hiển thị trên giao diện giới thiệu (Biến ghi nội bộ)
+    private val _thongTinPhienBan = MutableStateFlow("Phiên bản 1.0.0")
+    // Luồng dữ liệu công khai cung cấp thông tin phiên bản cho giao diện người dùng
+    val thongTinPhienBan: StateFlow<String> = _thongTinPhienBan.asStateFlow()
+
+    // Truy xuất thông tin phiên bản ứng dụng động từ hệ thống
+    fun taiThongTinPhienBan(context: Context) {
+        // Thực thi kiểm soát lỗi khi truy cập tài nguyên hệ thống
+        try {
+            // Kiểm tra điều kiện phiên bản Android để lấy thông tin gói cài đặt phù hợp
+            val thongTinGoi = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                // Lấy thông tin gói trên Android 13 trở lên bằng cờ InfoFlags mới
+                context.packageManager.getPackageInfo(
+                    context.packageName,
+                    android.content.pm.PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                // Tắt cảnh báo deprecated cho các hàm cũ
+                @Suppress("DEPRECATION")
+                // Lấy thông tin gói trên các phiên bản Android cũ hơn
+                context.packageManager.getPackageInfo(context.packageName, 0)
+            }
+            // Trích xuất tên phiên bản hiển thị và gán giá trị mặc định nếu rỗng
+            val tenPhienBan = thongTinGoi.versionName ?: "1.0.0"
+            // Gán chuỗi kết quả phiên bản sạch vào StateFlow
+            _thongTinPhienBan.value = "Phiên bản $tenPhienBan"
+        } catch (ngoaiLe: Exception) {
+            // Gán giá trị phiên bản mặc định khi xảy ra lỗi hệ thống
+            _thongTinPhienBan.value = "Phiên bản 1.0.0"
+        }
+    }
     // Thực thi xuất toàn bộ từ vựng ra file JSON thông qua Storage Access Framework
     fun xuatDuLieuJson(context: Context, uri: Uri) {
         _dangXuLy.value = true
