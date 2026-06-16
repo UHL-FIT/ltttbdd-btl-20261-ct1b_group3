@@ -169,7 +169,6 @@ fun ManHinhChinhUI(
                     }
                 }
             }
-
             // Trạng thái tải xong — hiển thị lưới danh mục
             else -> {
                 Column(
@@ -177,7 +176,6 @@ fun ManHinhChinhUI(
                         .padding(paddingValues)
                         .fillMaxSize()
                 ) {
-
                     // Thanh điều khiển chứa bộ lọc trạng thái và cách sắp xếp danh mục dạng dropdown
                     ThanhDieuKhienDropdown(
                         sapXepHienTai = kieuSapXep,
